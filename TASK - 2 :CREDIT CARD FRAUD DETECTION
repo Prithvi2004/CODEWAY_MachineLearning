@@ -1,0 +1,121 @@
+import pandas as pd
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, accuracy_score
+
+fraud_train = pd.read_csv("/content/drive/MyDrive/DataSets/CodeWay DataSets/fraudulent credit card transactions/fraudTrain.csv")
+fraud_test = pd.read_csv("/content/drive/MyDrive/DataSets/CodeWay DataSets/fraudulent credit card transactions/fraudTest.csv")
+
+fraud_train.drop(columns=["Unnamed: 0", "trans_num", "unix_time"], inplace=True)
+fraud_test.drop(columns=["Unnamed: 0", "trans_num", "unix_time"], inplace=True)
+
+combined_data = pd.concat([fraud_train, fraud_test], ignore_index=True)
+
+label_encoders = {}
+for column in combined_data.select_dtypes(include=["object"]).columns:
+    label_encoders[column] = LabelEncoder()
+    combined_data[column] = label_encoders[column].fit_transform(combined_data[column])
+
+train_data = combined_data[:len(fraud_train)]
+test_data = combined_data[len(fraud_train):]
+
+X_train = train_data.drop(columns=["is_fraud"])
+y_train = train_data["is_fraud"]
+X_test = test_data.drop(columns=["is_fraud"])
+y_test = test_data["is_fraud"]
+
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+rf_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_classifier.fit(X_train_scaled, y_train)
+
+y_pred = rf_classifier.predict(X_test_scaled)
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print(classification_report(y_test, y_pred))
+
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_curve, roc_auc_score
+import matplotlib.pyplot as plt
+
+# Evaluate accuracy on test set
+test_accuracy = accuracy_score(y_test, y_pred)
+print("Test Accuracy:", test_accuracy)
+
+# Generate confusion matrix
+conf_matrix = confusion_matrix(y_test, y_pred)
+print("Confusion Matrix:")
+print(conf_matrix)
+
+# Generate classification report
+print("Classification Report:")
+print(classification_report(y_test, y_pred))
+
+
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Generate confusion matrix
+conf_matrix = confusion_matrix(y_test, y_pred)
+
+# Plot confusion matrix
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False)
+plt.xlabel('Predicted labels')
+plt.ylabel('True labels')
+plt.title('Confusion Matrix')
+plt.show()
+
+
+import pandas as pd
+
+# Sample new data (without 'merchant' column)
+new_data = pd.DataFrame({
+    'amt': [29.0],  # Amount of transaction
+    'category': ['entertainment'],  # Transaction category
+    'first': ['Jeff'],  # First name
+    'last': ['Elliott'],  # Last name
+    'gender': ['M'],  # Gender
+    'street': ['351 Darlene Green'],  # Street address
+    'city': ['Columbia'],  # City
+    'state': ['SC'],  # State
+    'zip': [29209],  # Zip code
+    'lat': [33.9659],  # Latitude
+    'long': [-80.9355],  # Longitude
+    'city_pop': [333497],  # City population
+    'job': ['Mechanical engineer'],  # Job
+    'dob': ['1968-03-19'],  # Date of birth
+    'trans_date_trans_time':['2019-01-01 00:00:18'],
+    'cc_num':['2703186189652095'],
+    'merchant':['fraud_Rippin, Kub and Mann'],
+    'merch_lat':['36.011293'],
+    'merch_long':['-82.048315	'],
+})
+
+# Reorder columns to match the order of columns in X_train
+new_data = new_data[X_train.columns]
+
+# Convert categorical variables to numerical using LabelEncoder
+for column in new_data.select_dtypes(include=["object"]).columns:
+    try:
+        new_data[column] = label_encoders[column].transform(new_data[column])
+    except KeyError:
+        # Handle unseen labels by assigning a default value or a special category
+        new_data[column] = -1  # Assigning a default value of -1
+
+# Scale the features using the fitted scaler
+new_data_scaled = scaler.transform(new_data)
+
+# Make predictions using the trained model
+prediction = rf_classifier.predict(new_data_scaled)
+
+# Display prediction
+print("Predicted label:", prediction)
+
+
+
+fraud_train.head()
+
